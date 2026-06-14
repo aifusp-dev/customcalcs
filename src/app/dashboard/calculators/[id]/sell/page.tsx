@@ -23,7 +23,7 @@ export default async function SellPage({
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">Vender</h2>
         <p className="text-sm text-neutral-400">
-          Selecciona las cantidades vendidas y registra la venta.
+          Toca + para añadir productos y registra la venta cuando termines.
         </p>
       </div>
 
