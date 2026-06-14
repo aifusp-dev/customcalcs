@@ -57,7 +57,10 @@ export async function login(
   const { email, password } = validatedFields.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  if (!user || !user.password) {
+    return { message: "Email o contraseña incorrectos." };
+  }
+  if (!(await bcrypt.compare(password, user.password))) {
     return { message: "Email o contraseña incorrectos." };
   }
 

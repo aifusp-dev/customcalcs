@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { register } from "@/app/actions/auth";
+import { GoogleSignInButton } from "@/components/google-button";
 
 export default function RegisterPage() {
   const [state, action, pending] = useActionState(register, undefined);
@@ -80,6 +81,14 @@ export default function RegisterPage() {
             {pending ? "Creando cuenta..." : "Crear cuenta"}
           </button>
         </form>
+
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-neutral-800" />
+          <span className="text-xs text-neutral-500 uppercase tracking-wide">o</span>
+          <div className="h-px flex-1 bg-neutral-800" />
+        </div>
+
+        <GoogleSignInButton />
 
         <p className="text-center text-sm text-neutral-400">
           ¿Ya tienes cuenta?{" "}
