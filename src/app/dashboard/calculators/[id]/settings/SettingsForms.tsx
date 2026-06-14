@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   updateCalculator,
+  updateCalculatorTheme,
   deleteCalculator,
 } from "@/app/actions/calculators";
+import { ACCENT_COLOR_PRESETS, getContrastColor } from "@/lib/colors";
 
 export function UpdateCalculatorForm({
   calculatorId,
@@ -42,9 +44,86 @@ export function UpdateCalculatorForm({
       <button
         type="submit"
         disabled={pending}
-        className="bg-white text-black font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="bg-[var(--accent)] text-[var(--accent-fg)] font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {pending ? "Guardando..." : "Guardar cambios"}
+      </button>
+    </form>
+  );
+}
+
+export function ThemeForm({
+  calculatorId,
+  accentColor,
+}: {
+  calculatorId: string;
+  accentColor: string;
+}) {
+  const action = updateCalculatorTheme.bind(null, calculatorId);
+  const [state, formAction, pending] = useActionState(action, undefined);
+  const [color, setColor] = useState(accentColor);
+
+  return (
+    <form action={formAction} className="space-y-4 max-w-sm">
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-neutral-400 uppercase tracking-wide">
+          Color de la calculadora
+        </label>
+
+        <div className="flex flex-wrap gap-2">
+          {ACCENT_COLOR_PRESETS.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => setColor(preset)}
+              aria-label={preset}
+              className={`h-8 w-8 rounded-full border-2 transition-colors ${
+                color.toLowerCase() === preset.toLowerCase()
+                  ? "border-white"
+                  : "border-transparent"
+              }`}
+              style={{ backgroundColor: preset }}
+            />
+          ))}
+
+          <label
+            className="h-8 w-8 rounded-full border-2 border-neutral-700 overflow-hidden cursor-pointer relative"
+            style={{ backgroundColor: color }}
+          >
+            <input
+              type="color"
+              value={color}
+              onChange={(event) => setColor(event.target.value)}
+              className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+              aria-label="Color personalizado"
+            />
+          </label>
+        </div>
+
+        <input type="hidden" name="accentColor" value={color} />
+
+        {state?.errors?.accentColor && (
+          <p className="text-xs text-red-400">{state.errors.accentColor[0]}</p>
+        )}
+      </div>
+
+      <div
+        className="rounded-lg px-4 py-2.5 text-sm font-semibold w-fit"
+        style={{ backgroundColor: color, color: getContrastColor(color) }}
+      >
+        Vista previa
+      </div>
+
+      {state?.message && (
+        <p className="text-sm text-neutral-400">{state.message}</p>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="bg-[var(--accent)] text-[var(--accent-fg)] font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {pending ? "Guardando..." : "Guardar color"}
       </button>
     </form>
   );

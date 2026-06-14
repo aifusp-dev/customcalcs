@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { verifySession, getCalculatorRole } from "@/lib/dal";
 import { prisma } from "@/lib/db";
+import { getContrastColor } from "@/lib/colors";
 
 export default async function CalculatorLayout({
   children,
@@ -20,11 +21,13 @@ export default async function CalculatorLayout({
 
   const calculator = await prisma.calculator.findUnique({
     where: { id },
-    select: { name: true },
+    select: { name: true, accentColor: true },
   });
   if (!calculator) {
     notFound();
   }
+
+  const accentForeground = getContrastColor(calculator.accentColor);
 
   const canManageStock = role === "OWNER" || role === "EDITOR";
 
@@ -46,7 +49,15 @@ export default async function CalculatorLayout({
   ];
 
   return (
-    <div className="min-h-screen px-4 py-12">
+    <div
+      className="min-h-screen px-4 py-12"
+      style={
+        {
+          "--accent": calculator.accentColor,
+          "--accent-fg": accentForeground,
+        } as React.CSSProperties
+      }
+    >
       <div className="w-full max-w-3xl mx-auto space-y-8">
         <div className="space-y-1">
           <Link href="/dashboard" className="text-sm text-neutral-400 hover:underline">

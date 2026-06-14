@@ -8,6 +8,8 @@ import { slugify } from "@/lib/slug";
 import {
   CalculatorFormSchema,
   type CalculatorFormState,
+  CalculatorThemeFormSchema,
+  type CalculatorThemeFormState,
 } from "@/lib/definitions";
 
 async function generateUniqueSlug(name: string) {
@@ -89,4 +91,32 @@ export async function deleteCalculator(calculatorId: string) {
   await prisma.calculator.delete({ where: { id: calculatorId } });
 
   redirect("/dashboard");
+}
+
+export async function updateCalculatorTheme(
+  calculatorId: string,
+  _state: CalculatorThemeFormState,
+  formData: FormData
+): Promise<CalculatorThemeFormState> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (role !== "OWNER") {
+    return { message: "No tienes permiso para editar esta calculadora." };
+  }
+
+  const validatedFields = CalculatorThemeFormSchema.safeParse({
+    accentColor: formData.get("accentColor"),
+  });
+
+  if (!validatedFields.success) {
+    return { errors: validatedFields.error.flatten().fieldErrors };
+  }
+
+  await prisma.calculator.update({
+    where: { id: calculatorId },
+    data: { accentColor: validatedFields.data.accentColor },
+  });
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}`, "layout");
+  return { message: "Color actualizado." };
 }

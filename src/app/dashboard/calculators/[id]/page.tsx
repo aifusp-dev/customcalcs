@@ -33,7 +33,7 @@ export default async function CalculatorItemsPage({
         {role === "OWNER" && (
           <Link
             href={`/dashboard/calculators/${id}/items/new`}
-            className="text-sm bg-white text-black font-semibold rounded-lg px-4 py-2 hover:opacity-90 transition-opacity"
+            className="text-sm bg-[var(--accent)] text-[var(--accent-fg)] font-semibold rounded-lg px-4 py-2 hover:opacity-90 transition-opacity"
           >
             Añadir producto
           </Link>

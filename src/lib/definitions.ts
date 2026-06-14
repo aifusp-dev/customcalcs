@@ -35,6 +35,22 @@ export const CalculatorFormSchema = z.object({
     .max(60, { error: "El nombre no puede superar los 60 caracteres." }),
 });
 
+export const CalculatorThemeFormSchema = z.object({
+  accentColor: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, { error: "Elige un color válido." }),
+});
+
+export type CalculatorThemeFormState =
+  | {
+      errors?: {
+        accentColor?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
 export type CalculatorFormState =
   | {
       errors?: {

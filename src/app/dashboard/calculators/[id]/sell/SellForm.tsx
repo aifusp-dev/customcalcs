@@ -96,11 +96,13 @@ export default function SellForm({
       )}
 
       <div className="flex items-center justify-between border-t border-neutral-800 pt-4">
-        <p className="text-lg font-semibold">Total: {formatPrice(total)}</p>
+        <p className="text-lg font-semibold">
+          Total: <span className="text-[var(--accent)]">{formatPrice(total)}</span>
+        </p>
         <button
           type="submit"
           disabled={pending || items.length === 0}
-          className="bg-white text-black font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="bg-[var(--accent)] text-[var(--accent-fg)] font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {pending ? "Registrando..." : "Registrar venta"}
         </button>

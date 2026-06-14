@@ -116,7 +116,7 @@ export default function NewItemPage({
           <button
             type="submit"
             disabled={pending}
-            className="bg-white text-black font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="bg-[var(--accent)] text-[var(--accent-fg)] font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {pending ? "Guardando..." : "Guardar producto"}
           </button>

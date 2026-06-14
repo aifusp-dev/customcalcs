@@ -29,7 +29,7 @@ export default function InviteMemberForm({ calculatorId }: { calculatorId: strin
       <button
         type="submit"
         disabled={pending}
-        className="bg-white text-black font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
+        className="bg-[var(--accent)] text-[var(--accent-fg)] font-semibold rounded-lg px-4 py-2.5 text-sm hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
       >
         {pending ? "Invitando..." : "Invitar"}
       </button>

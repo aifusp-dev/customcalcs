@@ -32,11 +32,12 @@ model User {
 }
 
 model Calculator {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  ownerId   String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  ownerId     String
+  accentColor String   @default("#ffffff")
+  createdAt   DateTime @default(now())
 
   owner   User               @relation("CalculatorOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   items   Item[]

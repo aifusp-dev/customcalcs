@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { verifySession, getCalculatorRole } from "@/lib/dal";
 import { prisma } from "@/lib/db";
-import { UpdateCalculatorForm, DeleteCalculatorForm } from "./SettingsForms";
+import { UpdateCalculatorForm, ThemeForm, DeleteCalculatorForm } from "./SettingsForms";
 
 export default async function CalculatorSettingsPage({
   params,
@@ -15,7 +15,7 @@ export default async function CalculatorSettingsPage({
 
   const calculator = await prisma.calculator.findUnique({
     where: { id },
-    select: { name: true, slug: true },
+    select: { name: true, slug: true, accentColor: true },
   });
   if (!calculator) notFound();
 
@@ -28,6 +28,14 @@ export default async function CalculatorSettingsPage({
           <span className="text-neutral-300">{calculator.slug}</span>
         </p>
         <UpdateCalculatorForm calculatorId={id} name={calculator.name} />
+      </div>
+
+      <div className="space-y-4 border-t border-neutral-800 pt-6">
+        <h3 className="text-sm font-semibold">Personalización</h3>
+        <p className="text-sm text-neutral-400">
+          Elige el color de los botones y acentos de esta calculadora.
+        </p>
+        <ThemeForm calculatorId={id} accentColor={calculator.accentColor} />
       </div>
 
       <div className="space-y-2 border-t border-neutral-800 pt-6">
