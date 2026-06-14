@@ -77,7 +77,7 @@ export default async function CalculatorLayout({
           <h1 className="text-2xl font-bold tracking-tight">{calculator.name}</h1>
         </div>
 
-        <nav className="flex items-center gap-2 border-b border-neutral-800 overflow-x-auto">
+        <nav className="flex flex-wrap items-center gap-2 border-b border-neutral-800">
           {tabs.map((tab) => (
             <Link
               key={tab.href}
