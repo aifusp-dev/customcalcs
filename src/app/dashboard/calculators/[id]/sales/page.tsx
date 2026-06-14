@@ -3,36 +3,76 @@ import { verifySession, getCalculatorRole } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDateTime } from "@/lib/format";
 import { getCalculatorDisplayNames } from "@/lib/displayNames";
+import { SellerFilter } from "./SellerFilter";
 
 export default async function SalesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ userId?: string }>;
 }) {
   const { id } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
   if (role !== "OWNER" && role !== "EDITOR") notFound();
 
-  const sales = await prisma.sale.findMany({
-    where: { calculatorId: id },
-    include: {
-      user: { select: { name: true } },
-      items: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const { userId: filterUserId } = await searchParams;
+
+  const where = {
+    calculatorId: id,
+    ...(filterUserId ? { userId: filterUserId } : {}),
+  };
+
+  const [sales, totals, sellerRows] = await Promise.all([
+    prisma.sale.findMany({
+      where,
+      include: {
+        user: { select: { name: true } },
+        items: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    prisma.sale.aggregate({ where, _sum: { total: true } }),
+    prisma.sale.findMany({
+      where: { calculatorId: id },
+      select: { userId: true, user: { select: { name: true } } },
+      distinct: ["userId"],
+    }),
+  ]);
 
   const displayNames = await getCalculatorDisplayNames(id);
 
+  const sellers = sellerRows
+    .map((row) => ({
+      id: row.userId,
+      name: displayNames.get(row.userId) ?? row.user.name,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const totalSold = Number(totals._sum.total ?? 0);
+  const filteredSellerName = filterUserId
+    ? sellers.find((seller) => seller.id === filterUserId)?.name
+    : null;
+
   return (
     <section className="space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold">Registro de ventas</h2>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">Registro de ventas</h2>
+          <p className="text-sm text-neutral-400">
+            Últimas {sales.length} ventas registradas en esta calculadora.
+          </p>
+        </div>
+        <SellerFilter sellers={sellers} />
+      </div>
+
+      <div className="border border-neutral-800 rounded-lg px-4 py-3 flex items-center justify-between">
         <p className="text-sm text-neutral-400">
-          Últimas {sales.length} ventas registradas en esta calculadora.
+          {filteredSellerName ? `Total vendido por ${filteredSellerName}` : "Total vendido"}
         </p>
+        <p className="text-lg font-semibold">{formatPrice(totalSold)}</p>
       </div>
 
       {sales.length === 0 ? (
