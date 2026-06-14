@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallAppButton } from "@/components/install-app-button";
 
 export default function Home() {
   return (
@@ -26,6 +27,10 @@ export default function Home() {
           >
             Iniciar sesión
           </Link>
+        </div>
+
+        <div className="flex justify-center">
+          <InstallAppButton />
         </div>
       </div>
     </div>

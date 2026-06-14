@@ -2,6 +2,7 @@ import Link from "next/link";
 import { verifySession, getCurrentUser, isAdminEmail } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { logout } from "@/app/actions/auth";
+import { InstallAppButton } from "@/components/install-app-button";
 
 export default async function DashboardPage() {
   const { userId } = await verifySession();
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
             <p className="text-sm text-neutral-400">Hola, {user?.name}</p>
           </div>
           <div className="flex items-center gap-2">
+            <InstallAppButton />
             {user && isAdminEmail(user.email) && (
               <Link
                 href="/admin"
