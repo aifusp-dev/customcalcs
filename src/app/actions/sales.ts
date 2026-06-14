@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole, getCurrentUser } from "@/lib/dal";
+import { verifySession, getCalculatorRole, getCurrentUser, canManageCalculator } from "@/lib/dal";
 import { sendSaleNotification } from "@/lib/discord";
 import { getCalculatorDisplayNames } from "@/lib/displayNames";
 import type { SaleFormState } from "@/lib/definitions";
@@ -121,4 +121,19 @@ export async function createSale(
   }
 
   return { message: "Venta registrada correctamente.", success: true };
+}
+
+export async function clearSalesHistory(calculatorId: string) {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (!canManageCalculator(role)) {
+    throw new Error("No tienes permiso para gestionar esta calculadora.");
+  }
+
+  await prisma.calculator.update({
+    where: { id: calculatorId },
+    data: { salesClearedAt: new Date() },
+  });
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}/sales`);
 }

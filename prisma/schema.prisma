@@ -39,6 +39,7 @@ model Calculator {
   ownerId          String
   ownerDisplayName String?
   accentColor      String   @default("#ffffff")
+  salesClearedAt   DateTime?
   createdAt        DateTime @default(now())
 
   owner     User               @relation("CalculatorOwner", fields: [ownerId], references: [id], onDelete: Cascade)
