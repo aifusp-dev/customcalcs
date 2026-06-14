@@ -16,6 +16,11 @@ export default async function SellPage({
   const items = await prisma.item.findMany({
     where: { calculatorId: id },
     orderBy: { name: "asc" },
+    include: {
+      ingredients: {
+        select: { quantity: true, ingredient: { select: { stock: true } } },
+      },
+    },
   });
 
   const discounts = await prisma.discount.findMany({
@@ -34,14 +39,25 @@ export default async function SellPage({
 
       <SellForm
         calculatorId={id}
-        items={items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price.toString(),
-          stock: item.stock,
-          category: item.category,
-          imageUrl: item.imageUrl,
-        }))}
+        items={items.map((item) => {
+          const maxCraftable =
+            item.ingredients.length > 0
+              ? Math.min(
+                  ...item.ingredients.map((ing) =>
+                    Math.floor(ing.ingredient.stock / ing.quantity)
+                  )
+                )
+              : 0;
+
+          return {
+            id: item.id,
+            name: item.name,
+            price: item.price.toString(),
+            stock: item.stock + maxCraftable,
+            category: item.category,
+            imageUrl: item.imageUrl,
+          };
+        })}
         discounts={discounts.map((discount) => ({
           id: discount.id,
           name: discount.name,

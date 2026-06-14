@@ -18,33 +18,65 @@ export async function createSale(
     return { message: "No tienes acceso a esta calculadora." };
   }
 
-  const items = await prisma.item.findMany({ where: { calculatorId } });
+  const items = await prisma.item.findMany({
+    where: { calculatorId },
+    include: {
+      ingredients: {
+        select: { quantity: true, ingredient: { select: { id: true, name: true } } },
+      },
+    },
+  });
 
-  const lines: { itemId: string; name: string; price: string; stock: number; quantity: number }[] = [];
+  const remainingStock = new Map(items.map((item) => [item.id, item.stock]));
+
+  const lines: { itemId: string; name: string; price: string; quantity: number }[] = [];
+  const craftNeeds: { item: (typeof items)[number]; craftQty: number }[] = [];
+
   for (const item of items) {
     const raw = formData.get(`quantity-${item.id}`);
     const quantity = Number(raw ?? 0);
-    if (quantity > 0) {
-      if (!Number.isInteger(quantity)) {
-        return { message: `Cantidad no válida para ${item.name}.` };
-      }
-      if (quantity > item.stock) {
+    if (quantity <= 0) continue;
+    if (!Number.isInteger(quantity)) {
+      return { message: `Cantidad no válida para ${item.name}.` };
+    }
+
+    const available = remainingStock.get(item.id)!;
+    const fromStock = Math.min(quantity, available);
+    const craftQty = quantity - fromStock;
+    remainingStock.set(item.id, available - fromStock);
+
+    if (craftQty > 0) {
+      if (item.ingredients.length === 0) {
         return {
-          message: `No hay suficiente stock de ${item.name} (disponible: ${item.stock}).`,
+          message: `No hay suficiente stock de ${item.name} (disponible: ${available}).`,
         };
       }
-      lines.push({
-        itemId: item.id,
-        name: item.name,
-        price: item.price.toString(),
-        stock: item.stock,
-        quantity,
-      });
+      craftNeeds.push({ item, craftQty });
     }
+
+    lines.push({
+      itemId: item.id,
+      name: item.name,
+      price: item.price.toString(),
+      quantity,
+    });
   }
 
   if (lines.length === 0) {
     return { message: "Selecciona al menos un producto." };
+  }
+
+  for (const { item, craftQty } of craftNeeds) {
+    for (const { ingredient, quantity: perUnit } of item.ingredients) {
+      const required = perUnit * craftQty;
+      const available = remainingStock.get(ingredient.id)!;
+      if (available < required) {
+        return {
+          message: `No hay suficiente stock de ${ingredient.name} para preparar ${item.name} (necesario: ${required}, disponible: ${available}).`,
+        };
+      }
+      remainingStock.set(ingredient.id, available - required);
+    }
   }
 
   const subtotal = lines.reduce(
@@ -90,10 +122,16 @@ export async function createSale(
           quantity: line.quantity,
         },
       });
-      await tx.item.update({
-        where: { id: line.itemId },
-        data: { stock: { decrement: line.quantity } },
-      });
+    }
+
+    for (const item of items) {
+      const decrement = item.stock - remainingStock.get(item.id)!;
+      if (decrement !== 0) {
+        await tx.item.update({
+          where: { id: item.id },
+          data: { stock: { decrement } },
+        });
+      }
     }
   });
 
