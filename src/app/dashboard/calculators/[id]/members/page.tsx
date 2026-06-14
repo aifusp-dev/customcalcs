@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
+import { getAppUrl } from "@/lib/google-oauth";
 import InviteMemberForm from "./InviteMemberForm";
+import { InviteLinkSection } from "./InviteLinkSection";
 import MemberRow from "./MemberRow";
 
 export default async function MembersPage({
@@ -22,11 +24,32 @@ export default async function MembersPage({
 
   const calculator = await prisma.calculator.findUnique({
     where: { id },
-    select: { ownerId: true, ownerDisplayName: true, owner: { select: { name: true, email: true } } },
+    select: {
+      ownerId: true,
+      ownerDisplayName: true,
+      inviteToken: true,
+      owner: { select: { name: true, email: true } },
+    },
   });
+
+  const inviteUrl = calculator?.inviteToken
+    ? `${getAppUrl()}/invite/${calculator.inviteToken}`
+    : null;
 
   return (
     <section className="space-y-8">
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">Enlace de invitación</h2>
+          <p className="text-sm text-neutral-400">
+            Comparte este enlace para que cualquiera con una cuenta en CustomCalcs
+            pueda unirse a esta calculadora como miembro, sin tener que invitarlo
+            por email.
+          </p>
+        </div>
+        <InviteLinkSection calculatorId={id} inviteUrl={inviteUrl} />
+      </div>
+
       <div className="space-y-4">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold">Invitar usuario</h2>
