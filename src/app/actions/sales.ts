@@ -47,14 +47,37 @@ export async function createSale(
     return { message: "Selecciona al menos un producto." };
   }
 
-  const total = lines.reduce(
+  const subtotal = lines.reduce(
     (sum, line) => sum + Number(line.price) * line.quantity,
     0
   );
 
+  let discount: { name: string; percentage: string } | null = null;
+  const discountId = formData.get("discountId");
+  if (typeof discountId === "string" && discountId) {
+    const found = await prisma.discount.findUnique({
+      where: { id: discountId },
+      select: { calculatorId: true, name: true, percentage: true },
+    });
+    if (found && found.calculatorId === calculatorId) {
+      discount = { name: found.name, percentage: found.percentage.toString() };
+    }
+  }
+
+  const total = discount
+    ? Math.round(subtotal * (1 - Number(discount.percentage) / 100) * 100) / 100
+    : subtotal;
+
   await prisma.$transaction(async (tx) => {
     const sale = await tx.sale.create({
-      data: { calculatorId, userId, total },
+      data: {
+        calculatorId,
+        userId,
+        subtotal,
+        discountName: discount?.name,
+        discountPercentage: discount?.percentage,
+        total,
+      },
     });
 
     for (const line of lines) {
@@ -90,7 +113,9 @@ export async function createSale(
     await sendSaleNotification(calculator.discordWebhook.webhookUrl, {
       calculatorName: calculator.name,
       userName: displayNames.get(userId) ?? user?.name ?? "Alguien",
+      subtotal,
       total,
+      discount,
       lines,
     });
   }

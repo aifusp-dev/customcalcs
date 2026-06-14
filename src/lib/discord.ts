@@ -9,7 +9,9 @@ interface SaleNotificationLine {
 interface SaleNotificationData {
   calculatorName: string;
   userName: string;
+  subtotal: number;
   total: number;
+  discount: { name: string; percentage: string } | null;
   lines: SaleNotificationLine[];
 }
 
@@ -17,6 +19,17 @@ export async function sendSaleNotification(webhookUrl: string, data: SaleNotific
   const description = data.lines
     .map((line) => `${line.quantity}x ${line.name} — ${formatPrice(Number(line.price) * line.quantity)}`)
     .join("\n");
+
+  const fields = [{ name: "Vendido por", value: data.userName, inline: true }];
+
+  if (data.discount) {
+    fields.push(
+      { name: "Subtotal", value: formatPrice(data.subtotal), inline: true },
+      { name: "Descuento", value: `${data.discount.name} (-${data.discount.percentage}%)`, inline: true }
+    );
+  }
+
+  fields.push({ name: "Total", value: formatPrice(data.total), inline: true });
 
   try {
     await fetch(webhookUrl, {
@@ -28,10 +41,7 @@ export async function sendSaleNotification(webhookUrl: string, data: SaleNotific
             title: `Nueva venta en ${data.calculatorName}`,
             description,
             color: 0x22c55e,
-            fields: [
-              { name: "Vendido por", value: data.userName, inline: true },
-              { name: "Total", value: formatPrice(data.total), inline: true },
-            ],
+            fields,
             timestamp: new Date().toISOString(),
           },
         ],

@@ -18,6 +18,11 @@ export default async function SellPage({
     orderBy: { name: "asc" },
   });
 
+  const discounts = await prisma.discount.findMany({
+    where: { calculatorId: id },
+    orderBy: { name: "asc" },
+  });
+
   return (
     <section className="space-y-4">
       <div className="space-y-1">
@@ -36,6 +41,11 @@ export default async function SellPage({
           stock: item.stock,
           category: item.category,
           imageUrl: item.imageUrl,
+        }))}
+        discounts={discounts.map((discount) => ({
+          id: discount.id,
+          name: discount.name,
+          percentage: discount.percentage.toString(),
         }))}
       />
     </section>

@@ -36,6 +36,9 @@ export default async function CalculatorLayout({
     ...(canManageStock
       ? [{ href: `/dashboard/calculators/${id}/stock`, label: "Stock" }]
       : []),
+    ...(role === "OWNER"
+      ? [{ href: `/dashboard/calculators/${id}/discounts`, label: "Descuentos" }]
+      : []),
     { href: `/dashboard/calculators/${id}/sell`, label: "Vender" },
     ...(canManageStock
       ? [{ href: `/dashboard/calculators/${id}/sales`, label: "Ventas" }]

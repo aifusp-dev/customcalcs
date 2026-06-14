@@ -94,6 +94,28 @@ export type ItemFormState =
     }
   | undefined;
 
+export const DiscountFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: "El nombre es obligatorio." })
+    .max(40, { error: "El nombre no puede superar los 40 caracteres." }),
+  percentage: z.coerce
+    .number({ error: "El porcentaje debe ser un número." })
+    .positive({ error: "El porcentaje debe ser mayor que 0." })
+    .max(100, { error: "El porcentaje no puede superar 100." }),
+});
+
+export type DiscountFormState =
+  | {
+      errors?: {
+        name?: string[];
+        percentage?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
 export const InviteMemberFormSchema = z.object({
   email: z.email({ error: "Introduce un email válido." }).trim(),
 });

@@ -43,9 +43,19 @@ export default async function SalesPage({
             <li key={sale.id} className="border border-neutral-800 rounded-lg px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{formatPrice(sale.total)}</p>
+                  <div className="flex items-baseline gap-2">
+                    {sale.discountName && (
+                      <p className="text-sm text-neutral-400 line-through">
+                        {formatPrice(sale.subtotal)}
+                      </p>
+                    )}
+                    <p className="font-medium">{formatPrice(sale.total)}</p>
+                  </div>
                   <p className="text-xs text-neutral-400">
                     {formatDateTime(sale.createdAt)} · {displayNames.get(sale.userId) ?? sale.user.name}
+                    {sale.discountName && (
+                      <> · {sale.discountName} (-{sale.discountPercentage?.toString()}%)</>
+                    )}
                   </p>
                 </div>
               </div>

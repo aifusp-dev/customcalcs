@@ -40,10 +40,11 @@ model Calculator {
   accentColor      String   @default("#ffffff")
   createdAt        DateTime @default(now())
 
-  owner   User               @relation("CalculatorOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  items   Item[]
-  members CalculatorMember[]
-  sales   Sale[]
+  owner     User               @relation("CalculatorOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  items     Item[]
+  members   CalculatorMember[]
+  sales     Sale[]
+  discounts Discount[]
 
   discordWebhook DiscordWebhook?
 
@@ -106,17 +107,32 @@ model Item {
 }
 
 model Sale {
-  id           String   @id @default(cuid())
-  calculatorId String
-  userId       String
-  total        Decimal  @db.Decimal(10, 2)
-  createdAt    DateTime @default(now())
+  id                 String   @id @default(cuid())
+  calculatorId       String
+  userId             String
+  subtotal           Decimal  @db.Decimal(10, 2)
+  discountName       String?
+  discountPercentage Decimal? @db.Decimal(5, 2)
+  total              Decimal  @db.Decimal(10, 2)
+  createdAt          DateTime @default(now())
 
   calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items      SaleItem[]
 
   @@map("sales")
+}
+
+model Discount {
+  id           String   @id @default(cuid())
+  calculatorId String
+  name         String
+  percentage   Decimal  @db.Decimal(5, 2)
+  createdAt    DateTime @default(now())
+
+  calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
+
+  @@map("discounts")
 }
 
 model SaleItem {

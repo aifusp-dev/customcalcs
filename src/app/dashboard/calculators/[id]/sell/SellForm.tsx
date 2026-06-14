@@ -14,6 +14,12 @@ type Item = {
   imageUrl: string | null;
 };
 
+type Discount = {
+  id: string;
+  name: string;
+  percentage: string;
+};
+
 function groupByCategory(items: Item[]): [string, Item[]][] {
   const groups = new Map<string, Item[]>();
   for (const item of items) {
@@ -28,19 +34,23 @@ function groupByCategory(items: Item[]): [string, Item[]][] {
 export default function SellForm({
   calculatorId,
   items,
+  discounts,
 }: {
   calculatorId: string;
   items: Item[];
+  discounts: Discount[];
 }) {
   const action = createSale.bind(null, calculatorId);
   const [state, formAction, pending] = useActionState(action, undefined);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [discountId, setDiscountId] = useState("");
   const [handledState, setHandledState] = useState(state);
 
   if (state !== handledState) {
     setHandledState(state);
     if (state?.success) {
       setQuantities({});
+      setDiscountId("");
     }
   }
 
@@ -60,10 +70,14 @@ export default function SellForm({
     });
   };
 
-  const total = items.reduce(
+  const subtotal = items.reduce(
     (sum, item) => sum + Number(item.price) * (quantities[item.id] ?? 0),
     0
   );
+  const selectedDiscount = discounts.find((discount) => discount.id === discountId);
+  const total = selectedDiscount
+    ? subtotal * (1 - Number(selectedDiscount.percentage) / 100)
+    : subtotal;
   const totalUnits = Object.values(quantities).reduce((sum, q) => sum + q, 0);
   const groups = groupByCategory(items);
   const showCategoryHeadings =
@@ -179,11 +193,38 @@ export default function SellForm({
             </p>
           )}
 
+          {discounts.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label htmlFor="discountId" className="text-xs text-neutral-400 whitespace-nowrap">
+                Descuento
+              </label>
+              <select
+                id="discountId"
+                name="discountId"
+                value={discountId}
+                onChange={(event) => setDiscountId(event.target.value)}
+                className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-neutral-500 transition-colors"
+              >
+                <option value="">Sin descuento</option>
+                {discounts.map((discount) => (
+                  <option key={discount.id} value={discount.id}>
+                    {discount.name} (-{discount.percentage}%)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs text-neutral-400">
                 {totalUnits} {totalUnits === 1 ? "unidad" : "unidades"}
               </p>
+              {selectedDiscount && (
+                <p className="text-xs text-neutral-400 line-through">
+                  {formatPrice(subtotal)}
+                </p>
+              )}
               <p className="text-lg font-bold" aria-live="polite">
                 {formatPrice(total)}
               </p>
