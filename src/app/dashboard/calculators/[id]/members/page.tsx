@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import InviteMemberForm from "./InviteMemberForm";
 import MemberRow from "./MemberRow";
@@ -12,7 +12,7 @@ export default async function MembersPage({
   const { id } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
-  if (role !== "OWNER") notFound();
+  if (!canManageCalculator(role)) notFound();
 
   const members = await prisma.calculatorMember.findMany({
     where: { calculatorId: id },

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { ImportItemsForm } from "./ImportItemsForm";
 
 export default async function ImportItemsPage({
@@ -10,7 +10,7 @@ export default async function ImportItemsPage({
   const { id } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
-  if (role !== "OWNER") notFound();
+  if (!canManageCalculator(role)) notFound();
 
   return (
     <section className="space-y-6">

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { slugify } from "@/lib/slug";
 import {
   CalculatorFormSchema,
@@ -60,7 +60,7 @@ export async function updateCalculator(
 ): Promise<CalculatorFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para editar esta calculadora." };
   }
 
@@ -100,7 +100,7 @@ export async function updateCalculatorTheme(
 ): Promise<CalculatorThemeFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para editar esta calculadora." };
   }
 

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import StockRow from "./StockRow";
 
@@ -11,7 +11,7 @@ export default async function StockPage({
   const { id } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
-  if (role !== "OWNER" && role !== "EDITOR") notFound();
+  if (!canManageCalculator(role) && role !== "EDITOR") notFound();
 
   const items = await prisma.item.findMany({
     where: { calculatorId: id },

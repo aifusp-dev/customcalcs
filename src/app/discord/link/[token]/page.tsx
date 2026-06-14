@@ -70,7 +70,12 @@ export default async function DiscordLinkPage({
   }
 
   const calculators = await prisma.calculator.findMany({
-    where: { ownerId: session.userId },
+    where: {
+      OR: [
+        { ownerId: session.userId },
+        { members: { some: { userId: session.userId, role: "ADMIN" } } },
+      ],
+    },
     select: { id: true, name: true },
     orderBy: { createdAt: "desc" },
   });

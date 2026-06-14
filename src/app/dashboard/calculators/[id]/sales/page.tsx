@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDateTime } from "@/lib/format";
 import { getCalculatorDisplayNames } from "@/lib/displayNames";
@@ -15,7 +15,7 @@ export default async function SalesPage({
   const { id } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
-  if (role !== "OWNER" && role !== "EDITOR") notFound();
+  if (!canManageCalculator(role) && role !== "EDITOR") notFound();
 
   const { userId: filterUserId } = await searchParams;
 

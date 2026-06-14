@@ -35,6 +35,7 @@ export default function MemberRow({
         >
           <option value="MEMBER">Miembro</option>
           <option value="EDITOR">Editor</option>
+          <option value="ADMIN">Administrador</option>
         </select>
       </form>
 

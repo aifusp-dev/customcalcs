@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 
 export async function linkDiscordChannel(token: string, formData: FormData) {
   const { userId } = await verifySession();
@@ -13,7 +13,7 @@ export async function linkDiscordChannel(token: string, formData: FormData) {
   }
 
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     redirect(`/discord/link/${token}?error=1`);
   }
 
@@ -46,7 +46,7 @@ export async function linkDiscordChannel(token: string, formData: FormData) {
 export async function unlinkDiscordWebhook(calculatorId: string) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     throw new Error("No tienes permiso para gestionar esta calculadora.");
   }
 

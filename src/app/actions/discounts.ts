@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { DiscountFormSchema, type DiscountFormState } from "@/lib/definitions";
 
 export async function createDiscount(
@@ -12,7 +12,7 @@ export async function createDiscount(
 ): Promise<DiscountFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para gestionar descuentos en esta calculadora." };
   }
 
@@ -37,7 +37,7 @@ export async function createDiscount(
 export async function deleteDiscount(calculatorId: string, discountId: string) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     throw new Error("No tienes permiso para gestionar descuentos en esta calculadora.");
   }
 

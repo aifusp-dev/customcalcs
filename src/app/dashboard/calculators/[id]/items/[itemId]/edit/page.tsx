@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import EditItemForm from "./EditItemForm";
 
@@ -11,7 +11,7 @@ export default async function EditItemPage({
   const { id, itemId } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
-  if (role !== "OWNER") notFound();
+  if (!canManageCalculator(role)) notFound();
 
   const item = await prisma.item.findUnique({ where: { id: itemId } });
   if (!item || item.calculatorId !== id) notFound();

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { deleteDiscount } from "@/app/actions/discounts";
 import { CreateDiscountForm } from "./CreateDiscountForm";
@@ -12,7 +12,7 @@ export default async function DiscountsPage({
   const { id } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
-  if (role !== "OWNER") notFound();
+  if (!canManageCalculator(role)) notFound();
 
   const discounts = await prisma.discount.findMany({
     where: { calculatorId: id },

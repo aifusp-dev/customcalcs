@@ -6,7 +6,7 @@ import * as z from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import {
   ItemFormSchema,
   type ItemFormState,
@@ -59,7 +59,7 @@ export async function createItem(
 ): Promise<ItemFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para añadir productos a esta calculadora." };
   }
 
@@ -110,7 +110,7 @@ export async function updateItem(
 ): Promise<ItemFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para editar productos de esta calculadora." };
   }
 
@@ -160,7 +160,7 @@ export async function updateItem(
 export async function deleteItem(calculatorId: string, itemId: string) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     throw new Error("No tienes permiso para eliminar productos de esta calculadora.");
   }
 
@@ -185,7 +185,7 @@ export async function setItemStock(
 ) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER" && role !== "EDITOR") {
+  if (!canManageCalculator(role) && role !== "EDITOR") {
     throw new Error("No tienes permiso para gestionar el stock de esta calculadora.");
   }
 
@@ -215,7 +215,7 @@ export async function parseItemsWithAI(
 ): Promise<AIImportFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para importar productos en esta calculadora." };
   }
 
@@ -261,7 +261,7 @@ export async function importItemsBulk(
 ): Promise<AIImportFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para importar productos en esta calculadora." };
   }
 

@@ -12,6 +12,7 @@ datasource db {
 
 enum CalculatorRole {
   OWNER
+  ADMIN
   EDITOR
   MEMBER
 }

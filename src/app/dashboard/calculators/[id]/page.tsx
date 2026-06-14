@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { deleteItem } from "@/app/actions/items";
 
@@ -30,7 +30,7 @@ export default async function CalculatorItemsPage({
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Productos</h2>
-        {role === "OWNER" && (
+        {canManageCalculator(role) && (
           <div className="flex items-center gap-2">
             <Link
               href={`/dashboard/calculators/${id}/items/import`}
@@ -85,7 +85,7 @@ export default async function CalculatorItemsPage({
                 {formatPrice(item.price)}
               </p>
 
-              {role === "OWNER" && (
+              {canManageCalculator(role) && (
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/dashboard/calculators/${id}/items/${item.id}/edit`}

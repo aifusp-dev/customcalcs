@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { getContrastColor } from "@/lib/colors";
 import { NavMenu } from "./NavMenu";
@@ -30,7 +30,7 @@ export default async function CalculatorLayout({
 
   const accentForeground = getContrastColor(calculator.accentColor);
 
-  const canManageStock = role === "OWNER" || role === "EDITOR";
+  const canManageStock = canManageCalculator(role) || role === "EDITOR";
 
   const tabs = [
     { href: `/dashboard/calculators/${id}`, label: "Productos" },
@@ -47,13 +47,13 @@ export default async function CalculatorLayout({
     ...(canManageStock
       ? [{ href: `/dashboard/calculators/${id}/customers`, label: "Clientes" }]
       : []),
-    ...(role === "OWNER"
+    ...(canManageCalculator(role)
       ? [{ href: `/dashboard/calculators/${id}/discounts`, label: "Descuentos" }]
       : []),
   ];
 
   const settingsItems =
-    role === "OWNER"
+    canManageCalculator(role)
       ? [
           { href: `/dashboard/calculators/${id}/members`, label: "Miembros" },
           { href: `/dashboard/calculators/${id}/discord`, label: "Discord" },

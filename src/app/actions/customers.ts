@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { CustomerFormSchema, type CustomerFormState } from "@/lib/definitions";
 
 export async function createCustomer(
@@ -12,7 +12,7 @@ export async function createCustomer(
 ): Promise<CustomerFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER" && role !== "EDITOR") {
+  if (!canManageCalculator(role) && role !== "EDITOR") {
     return { message: "No tienes permiso para gestionar clientes en esta calculadora." };
   }
 
@@ -41,7 +41,7 @@ export async function updateCustomer(
 ): Promise<CustomerFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER" && role !== "EDITOR") {
+  if (!canManageCalculator(role) && role !== "EDITOR") {
     return { message: "No tienes permiso para gestionar clientes en esta calculadora." };
   }
 
@@ -75,7 +75,7 @@ export async function updateCustomer(
 export async function deleteCustomer(calculatorId: string, customerId: string) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER" && role !== "EDITOR") {
+  if (!canManageCalculator(role) && role !== "EDITOR") {
     throw new Error("No tienes permiso para gestionar clientes en esta calculadora.");
   }
 

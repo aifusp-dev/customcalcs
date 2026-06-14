@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import {
   InviteMemberFormSchema,
   type InviteMemberFormState,
@@ -17,7 +17,7 @@ export async function inviteMember(
 ): Promise<InviteMemberFormState> {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     return { message: "No tienes permiso para invitar usuarios a esta calculadora." };
   }
 
@@ -69,12 +69,12 @@ export async function setMemberRole(
 ) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     throw new Error("No tienes permiso para gestionar miembros de esta calculadora.");
   }
 
   const newRole = formData.get("role");
-  if (newRole !== "MEMBER" && newRole !== "EDITOR") {
+  if (newRole !== "MEMBER" && newRole !== "EDITOR" && newRole !== "ADMIN") {
     throw new Error("Rol no válido.");
   }
 
@@ -133,7 +133,7 @@ export async function setMyDisplayName(
 export async function removeMember(calculatorId: string, memberId: string) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);
-  if (role !== "OWNER") {
+  if (!canManageCalculator(role)) {
     throw new Error("No tienes permiso para gestionar miembros de esta calculadora.");
   }
 

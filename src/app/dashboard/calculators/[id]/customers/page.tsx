@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { CreateCustomerForm } from "./CreateCustomerForm";
 import { CustomerCard } from "./CustomerCard";
@@ -12,7 +12,7 @@ export default async function CustomersPage({
   const { id } = await params;
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
-  if (role !== "OWNER" && role !== "EDITOR") notFound();
+  if (!canManageCalculator(role) && role !== "EDITOR") notFound();
 
   const customers = await prisma.customer.findMany({
     where: { calculatorId: id },

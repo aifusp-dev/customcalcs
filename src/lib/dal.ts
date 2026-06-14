@@ -61,3 +61,11 @@ export const getCalculatorRole = cache(
     return calculator.members[0]?.role ?? null;
   }
 );
+
+/**
+ * Los administradores tienen los mismos permisos que el dueño salvo eliminar
+ * la calculadora.
+ */
+export function canManageCalculator(role: string | null) {
+  return role === "OWNER" || role === "ADMIN";
+}
