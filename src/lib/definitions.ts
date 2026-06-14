@@ -116,6 +116,30 @@ export type DiscountFormState =
     }
   | undefined;
 
+export const CustomerFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: "El nombre es obligatorio." })
+    .max(60, { error: "El nombre no puede superar los 60 caracteres." }),
+  notes: z
+    .string()
+    .trim()
+    .max(2000, { error: "Las notas no pueden superar los 2000 caracteres." })
+    .optional()
+    .or(z.literal("")),
+});
+
+export type CustomerFormState =
+  | {
+      errors?: {
+        name?: string[];
+        notes?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
 export const InviteMemberFormSchema = z.object({
   email: z.email({ error: "Introduce un email válido." }).trim(),
 });

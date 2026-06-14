@@ -45,6 +45,7 @@ model Calculator {
   members   CalculatorMember[]
   sales     Sale[]
   discounts Discount[]
+  customers Customer[]
 
   discordWebhook DiscordWebhook?
 
@@ -133,6 +134,19 @@ model Discount {
   calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
 
   @@map("discounts")
+}
+
+model Customer {
+  id           String   @id @default(cuid())
+  calculatorId String
+  name         String
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
+
+  @@map("customers")
 }
 
 model SaleItem {
