@@ -99,7 +99,8 @@ export async function createItem(
     await prisma.item.update({ where: { id: item.id }, data: { imageUrl } });
   }
 
-  redirect(`/dashboard/calculators/${calculatorId}`);
+  revalidatePath(`/dashboard/calculators/${calculatorId}`);
+  redirect(`/dashboard/calculators/${calculatorId}/items/${item.id}/edit`);
 }
 
 export async function updateItem(
