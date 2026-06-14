@@ -106,7 +106,23 @@ model Item {
   calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
   saleItems  SaleItem[]
 
+  ingredients ItemIngredient[] @relation("RecipeItem")
+  usedIn      ItemIngredient[] @relation("IngredientItem")
+
   @@map("items")
+}
+
+model ItemIngredient {
+  id           String @id @default(cuid())
+  itemId       String
+  ingredientId String
+  quantity     Int
+
+  item       Item @relation("RecipeItem", fields: [itemId], references: [id], onDelete: Cascade)
+  ingredient Item @relation("IngredientItem", fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, ingredientId])
+  @@map("item_ingredients")
 }
 
 model Sale {

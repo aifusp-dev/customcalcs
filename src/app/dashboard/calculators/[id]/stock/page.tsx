@@ -16,6 +16,14 @@ export default async function StockPage({
   const items = await prisma.item.findMany({
     where: { calculatorId: id },
     orderBy: { name: "asc" },
+    include: {
+      ingredients: {
+        select: {
+          quantity: true,
+          ingredient: { select: { id: true, name: true, stock: true } },
+        },
+      },
+    },
   });
 
   return (
@@ -42,6 +50,11 @@ export default async function StockPage({
                 name: item.name,
                 category: item.category,
                 stock: item.stock,
+                recipe: item.ingredients.map((row) => ({
+                  name: row.ingredient.name,
+                  quantity: row.quantity,
+                  stock: row.ingredient.stock,
+                })),
               }}
             />
           ))}
