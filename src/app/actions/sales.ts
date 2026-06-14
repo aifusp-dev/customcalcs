@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { verifySession, getCalculatorRole, getCurrentUser } from "@/lib/dal";
 import { sendSaleNotification } from "@/lib/discord";
+import { getCalculatorDisplayNames } from "@/lib/displayNames";
 import type { SaleFormState } from "@/lib/definitions";
 
 export async function createSale(
@@ -85,9 +86,10 @@ export async function createSale(
 
   if (calculator?.discordWebhook) {
     const user = await getCurrentUser();
+    const displayNames = await getCalculatorDisplayNames(calculatorId);
     await sendSaleNotification(calculator.discordWebhook.webhookUrl, {
       calculatorName: calculator.name,
-      userName: user?.name ?? "Alguien",
+      userName: displayNames.get(userId) ?? user?.name ?? "Alguien",
       total,
       lines,
     });

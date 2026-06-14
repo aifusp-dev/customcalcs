@@ -49,6 +49,7 @@ export default async function CalculatorLayout({
     ...(role === "OWNER"
       ? [{ href: `/dashboard/calculators/${id}/settings`, label: "Ajustes" }]
       : []),
+    { href: `/dashboard/calculators/${id}/profile`, label: "Mi nombre" },
   ];
 
   return (

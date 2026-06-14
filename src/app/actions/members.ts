@@ -6,6 +6,8 @@ import { verifySession, getCalculatorRole } from "@/lib/dal";
 import {
   InviteMemberFormSchema,
   type InviteMemberFormState,
+  DisplayNameFormSchema,
+  type DisplayNameFormState,
 } from "@/lib/definitions";
 
 export async function inviteMember(
@@ -90,6 +92,42 @@ export async function setMemberRole(
   });
 
   revalidatePath(`/dashboard/calculators/${calculatorId}/members`);
+}
+
+export async function setMyDisplayName(
+  calculatorId: string,
+  _state: DisplayNameFormState,
+  formData: FormData
+): Promise<DisplayNameFormState> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (!role) {
+    return { message: "No tienes acceso a esta calculadora." };
+  }
+
+  const validatedFields = DisplayNameFormSchema.safeParse({
+    displayName: formData.get("displayName"),
+  });
+  if (!validatedFields.success) {
+    return { errors: validatedFields.error.flatten().fieldErrors };
+  }
+
+  const displayName = validatedFields.data.displayName?.trim() || null;
+
+  if (role === "OWNER") {
+    await prisma.calculator.update({
+      where: { id: calculatorId },
+      data: { ownerDisplayName: displayName },
+    });
+  } else {
+    await prisma.calculatorMember.update({
+      where: { calculatorId_userId: { calculatorId, userId } },
+      data: { displayName },
+    });
+  }
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}`, "layout");
+  return { message: "Nombre actualizado." };
 }
 
 export async function removeMember(calculatorId: string, memberId: string) {

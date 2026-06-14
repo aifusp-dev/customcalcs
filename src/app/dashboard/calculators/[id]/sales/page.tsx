@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { verifySession, getCalculatorRole } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDateTime } from "@/lib/format";
+import { getCalculatorDisplayNames } from "@/lib/displayNames";
 
 export default async function SalesPage({
   params,
@@ -23,6 +24,8 @@ export default async function SalesPage({
     take: 100,
   });
 
+  const displayNames = await getCalculatorDisplayNames(id);
+
   return (
     <section className="space-y-4">
       <div className="space-y-1">
@@ -42,7 +45,7 @@ export default async function SalesPage({
                 <div>
                   <p className="font-medium">{formatPrice(sale.total)}</p>
                   <p className="text-xs text-neutral-400">
-                    {formatDateTime(sale.createdAt)} · {sale.user.name}
+                    {formatDateTime(sale.createdAt)} · {displayNames.get(sale.userId) ?? sale.user.name}
                   </p>
                 </div>
               </div>

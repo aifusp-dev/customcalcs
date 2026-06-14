@@ -107,6 +107,24 @@ export type InviteMemberFormState =
     }
   | undefined;
 
+export const DisplayNameFormSchema = z.object({
+  displayName: z
+    .string()
+    .trim()
+    .max(40, { error: "El nombre no puede superar los 40 caracteres." })
+    .optional()
+    .or(z.literal("")),
+});
+
+export type DisplayNameFormState =
+  | {
+      errors?: {
+        displayName?: string[];
+      };
+      message?: string;
+    }
+  | undefined;
+
 export type SaleFormState =
   | {
       message?: string;

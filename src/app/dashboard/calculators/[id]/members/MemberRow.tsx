@@ -8,7 +8,7 @@ export default function MemberRow({
   member,
 }: {
   calculatorId: string;
-  member: { id: string; role: string; name: string; email: string };
+  member: { id: string; role: string; name: string; accountName: string | null; email: string };
 }) {
   const roleFormRef = useRef<HTMLFormElement>(null);
   const setRole = setMemberRole.bind(null, calculatorId, member.id);
@@ -17,7 +17,12 @@ export default function MemberRow({
   return (
     <li className="flex items-center gap-4 border border-neutral-800 rounded-lg px-4 py-3">
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{member.name}</p>
+        <p className="font-medium truncate">
+          {member.name}
+          {member.accountName && (
+            <span className="text-neutral-400"> ({member.accountName})</span>
+          )}
+        </p>
         <p className="text-xs text-neutral-400 truncate">{member.email}</p>
       </div>
 
