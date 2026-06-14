@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/format";
 
@@ -28,6 +29,7 @@ export default async function AdminUsersPage() {
               <th className="px-4 py-2.5">Membresías</th>
               <th className="px-4 py-2.5">Ventas</th>
               <th className="px-4 py-2.5">Registrado</th>
+              <th className="px-4 py-2.5" />
             </tr>
           </thead>
           <tbody>
@@ -43,6 +45,14 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-2.5">{user._count.sales}</td>
                 <td className="px-4 py-2.5 text-neutral-400">
                   {formatDateTime(user.createdAt)}
+                </td>
+                <td className="px-4 py-2.5">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="text-xs text-neutral-400 underline hover:text-white"
+                  >
+                    Ver
+                  </Link>
                 </td>
               </tr>
             ))}
