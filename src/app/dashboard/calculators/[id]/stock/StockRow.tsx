@@ -14,9 +14,9 @@ export default function StockRow({
   const action = setItemStock.bind(null, calculatorId, item.id);
 
   return (
-    <li className="flex items-center gap-4 border border-neutral-800 rounded-lg px-4 py-3">
-      <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{item.name}</p>
+    <li className="border border-neutral-800 rounded-lg px-3 py-2 space-y-2">
+      <div className="min-w-0">
+        <p className="font-medium text-sm truncate">{item.name}</p>
         {item.category && (
           <p className="text-xs text-neutral-400 truncate">{item.category}</p>
         )}
@@ -36,16 +36,16 @@ export default function StockRow({
           step="1"
           min="0"
           defaultValue={item.stock}
-          className="w-24 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-neutral-500 transition-colors"
+          className="w-full min-w-0 bg-neutral-900 border border-neutral-800 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-neutral-500 transition-colors"
         />
         <button
           type="submit"
-          className="text-sm border border-neutral-800 rounded-lg px-3 py-1.5 hover:bg-neutral-900 transition-colors"
+          className="text-sm border border-neutral-800 rounded-lg px-2 py-1.5 hover:bg-neutral-900 transition-colors whitespace-nowrap"
         >
           Guardar
         </button>
-        {saved && <span className="text-xs text-green-400">Guardado</span>}
       </form>
+      {saved && <p className="text-xs text-green-400">Guardado</p>}
     </li>
   );
 }
