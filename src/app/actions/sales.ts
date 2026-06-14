@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, getCurrentUser } from "@/lib/dal";
+import { sendSaleNotification } from "@/lib/discord";
 import type { SaleFormState } from "@/lib/definitions";
 
 export async function createSale(
@@ -76,6 +77,21 @@ export async function createSale(
   revalidatePath(`/dashboard/calculators/${calculatorId}/stock`);
   revalidatePath(`/dashboard/calculators/${calculatorId}/sales`);
   revalidatePath(`/dashboard/calculators/${calculatorId}`);
+
+  const calculator = await prisma.calculator.findUnique({
+    where: { id: calculatorId },
+    select: { name: true, discordWebhook: { select: { webhookUrl: true } } },
+  });
+
+  if (calculator?.discordWebhook) {
+    const user = await getCurrentUser();
+    await sendSaleNotification(calculator.discordWebhook.webhookUrl, {
+      calculatorName: calculator.name,
+      userName: user?.name ?? "Alguien",
+      total,
+      lines,
+    });
+  }
 
   return { message: "Venta registrada correctamente.", success: true };
 }

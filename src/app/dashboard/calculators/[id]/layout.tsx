@@ -44,6 +44,9 @@ export default async function CalculatorLayout({
       ? [{ href: `/dashboard/calculators/${id}/members`, label: "Miembros" }]
       : []),
     ...(role === "OWNER"
+      ? [{ href: `/dashboard/calculators/${id}/discord`, label: "Discord" }]
+      : []),
+    ...(role === "OWNER"
       ? [{ href: `/dashboard/calculators/${id}/settings`, label: "Ajustes" }]
       : []),
   ];

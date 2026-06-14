@@ -44,7 +44,33 @@ model Calculator {
   members CalculatorMember[]
   sales   Sale[]
 
+  discordWebhook DiscordWebhook?
+
   @@map("calculators")
+}
+
+model DiscordWebhook {
+  id           String   @id @default(cuid())
+  calculatorId String   @unique
+  webhookUrl   String
+  guildName    String?
+  channelName  String?
+  createdAt    DateTime @default(now())
+
+  calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
+
+  @@map("discord_webhooks")
+}
+
+model DiscordLinkToken {
+  token       String   @id
+  webhookUrl  String
+  guildName   String?
+  channelName String?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@map("discord_link_tokens")
 }
 
 model CalculatorMember {
