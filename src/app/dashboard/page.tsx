@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { verifySession, getCurrentUser } from "@/lib/dal";
+import { verifySession, getCurrentUser, isAdminEmail } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { logout } from "@/app/actions/auth";
 
@@ -27,14 +27,24 @@ export default async function DashboardPage() {
             <h1 className="text-2xl font-bold tracking-tight">CustomCalcs</h1>
             <p className="text-sm text-neutral-400">Hola, {user?.name}</p>
           </div>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="text-sm border border-neutral-800 rounded-lg px-4 py-2 hover:bg-neutral-900 transition-colors"
-            >
-              Cerrar sesión
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            {user && isAdminEmail(user.email) && (
+              <Link
+                href="/admin"
+                className="text-sm border border-neutral-800 rounded-lg px-4 py-2 hover:bg-neutral-900 transition-colors"
+              >
+                Admin
+              </Link>
+            )}
+            <form action={logout}>
+              <button
+                type="submit"
+                className="text-sm border border-neutral-800 rounded-lg px-4 py-2 hover:bg-neutral-900 transition-colors"
+              >
+                Cerrar sesión
+              </button>
+            </form>
+          </div>
         </div>
 
         <section className="space-y-4">

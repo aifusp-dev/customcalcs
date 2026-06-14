@@ -22,6 +22,23 @@ export const getCurrentUser = cache(async () => {
   });
 });
 
+export function isAdminEmail(email: string) {
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  return adminEmails.includes(email.toLowerCase());
+}
+
+export const requireAdmin = cache(async () => {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (!isAdminEmail(user.email)) redirect("/dashboard");
+
+  return user;
+});
+
 /**
  * Devuelve el rol del usuario en una calculadora (incluyendo OWNER si es el dueño),
  * o null si no tiene acceso.
