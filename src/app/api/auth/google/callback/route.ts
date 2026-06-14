@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createSession } from "@/lib/session";
-import { exchangeCodeForTokens, fetchGoogleUserInfo } from "@/lib/google-oauth";
+import { exchangeCodeForTokens, fetchGoogleUserInfo, getAppUrl } from "@/lib/google-oauth";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const storedState = request.cookies.get("g_oauth_state")?.value;
 
   if (!code || !state || !storedState || state !== storedState) {
-    return NextResponse.redirect(new URL("/login?error=google", request.url));
+    return NextResponse.redirect(new URL("/login?error=google", getAppUrl()));
   }
 
   try {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const profile = await fetchGoogleUserInfo(access_token);
 
     if (!profile.email_verified) {
-      return NextResponse.redirect(new URL("/login?error=google", request.url));
+      return NextResponse.redirect(new URL("/login?error=google", getAppUrl()));
     }
 
     let user = await prisma.user.findUnique({ where: { googleId: profile.sub } });
@@ -42,10 +42,10 @@ export async function GET(request: NextRequest) {
 
     await createSession(user.id);
 
-    const response = NextResponse.redirect(new URL("/dashboard", request.url));
+    const response = NextResponse.redirect(new URL("/dashboard", getAppUrl()));
     response.cookies.delete("g_oauth_state");
     return response;
   } catch {
-    return NextResponse.redirect(new URL("/login?error=google", request.url));
+    return NextResponse.redirect(new URL("/login?error=google", getAppUrl()));
   }
 }

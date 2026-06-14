@@ -4,9 +4,12 @@ const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
 
+export function getAppUrl() {
+  return process.env.APP_URL ?? "http://localhost:3000";
+}
+
 function getRedirectUri() {
-  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
-  return `${appUrl}/api/auth/google/callback`;
+  return `${getAppUrl()}/api/auth/google/callback`;
 }
 
 export function getGoogleAuthUrl(state: string) {
