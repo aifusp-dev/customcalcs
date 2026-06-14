@@ -113,3 +113,35 @@ export type SaleFormState =
       success?: boolean;
     }
   | undefined;
+
+export const AIParsedItemSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: "El nombre es obligatorio." })
+    .max(60, { error: "El nombre no puede superar los 60 caracteres." }),
+  price: z.coerce
+    .number({ error: "El precio debe ser un número." })
+    .nonnegative({ error: "El precio no puede ser negativo." }),
+  category: z
+    .string()
+    .trim()
+    .max(40, { error: "La categoría no puede superar los 40 caracteres." })
+    .nullable()
+    .optional(),
+  stock: z.coerce
+    .number({ error: "El stock debe ser un número." })
+    .int({ error: "El stock debe ser un número entero." })
+    .nonnegative({ error: "El stock no puede ser negativo." })
+    .optional(),
+});
+
+export type AIParsedItem = z.infer<typeof AIParsedItemSchema>;
+
+export type AIImportFormState =
+  | {
+      items?: AIParsedItem[];
+      skipped?: number;
+      message?: string;
+    }
+  | undefined;

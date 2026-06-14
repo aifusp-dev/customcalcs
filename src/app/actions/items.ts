@@ -2,11 +2,18 @@
 
 import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
+import * as z from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { verifySession, getCalculatorRole } from "@/lib/dal";
-import { ItemFormSchema, type ItemFormState } from "@/lib/definitions";
+import {
+  ItemFormSchema,
+  type ItemFormState,
+  AIParsedItemSchema,
+  type AIImportFormState,
+} from "@/lib/definitions";
+import { parseMenuText } from "@/lib/gemini";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
@@ -199,4 +206,92 @@ export async function setItemStock(
 
   revalidatePath(`/dashboard/calculators/${calculatorId}/stock`);
   revalidatePath(`/dashboard/calculators/${calculatorId}`);
+}
+
+export async function parseItemsWithAI(
+  calculatorId: string,
+  _state: AIImportFormState,
+  formData: FormData
+): Promise<AIImportFormState> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (role !== "OWNER") {
+    return { message: "No tienes permiso para importar productos en esta calculadora." };
+  }
+
+  const text = formData.get("text");
+  if (typeof text !== "string" || !text.trim()) {
+    return { message: "Pega el listado de productos antes de generar." };
+  }
+
+  const existingCategories = await prisma.item.findMany({
+    where: { calculatorId, category: { not: null } },
+    distinct: ["category"],
+    select: { category: true },
+  });
+
+  try {
+    const result = await parseMenuText(
+      text,
+      existingCategories.map((c) => c.category!).filter(Boolean)
+    );
+
+    const validated = z.array(AIParsedItemSchema).safeParse(result.items);
+    if (!validated.success) {
+      return { message: "La IA devolvió datos con un formato inesperado. Inténtalo de nuevo." };
+    }
+
+    if (validated.data.length === 0) {
+      return {
+        message: "No se encontraron productos con precio en el texto proporcionado.",
+        skipped: result.skipped,
+      };
+    }
+
+    return { items: validated.data, skipped: result.skipped };
+  } catch (error) {
+    return { message: error instanceof Error ? error.message : "Error al consultar la IA." };
+  }
+}
+
+export async function importItemsBulk(
+  calculatorId: string,
+  _state: AIImportFormState,
+  formData: FormData
+): Promise<AIImportFormState> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (role !== "OWNER") {
+    return { message: "No tienes permiso para importar productos en esta calculadora." };
+  }
+
+  const raw = formData.get("items");
+  if (typeof raw !== "string") {
+    return { message: "No hay productos para importar." };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { message: "Datos de importación inválidos." };
+  }
+
+  const validated = z.array(AIParsedItemSchema).safeParse(parsed);
+  if (!validated.success || validated.data.length === 0) {
+    return { message: "No hay productos válidos para importar." };
+  }
+
+  await prisma.item.createMany({
+    data: validated.data.map((item) => ({
+      calculatorId,
+      name: item.name,
+      price: item.price,
+      category: item.category || null,
+      stock: item.stock ?? 0,
+    })),
+  });
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}`);
+  redirect(`/dashboard/calculators/${calculatorId}`);
 }
