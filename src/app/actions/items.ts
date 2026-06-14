@@ -94,7 +94,7 @@ export async function createItem(
     select: { id: true },
   });
 
-  if (imageFile) {
+  if (imageFile && imageFile.size > 0) {
     const imageUrl = await saveItemImage(item.id, imageFile);
     await prisma.item.update({ where: { id: item.id }, data: { imageUrl } });
   }
@@ -143,7 +143,7 @@ export async function updateItem(
   }
 
   let imageUrl = existing.imageUrl;
-  if (imageFile) {
+  if (imageFile && imageFile.size > 0) {
     await deleteItemImage(existing.imageUrl);
     imageUrl = await saveItemImage(itemId, imageFile);
   }
