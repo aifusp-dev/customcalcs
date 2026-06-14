@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { InstallAppButton } from "@/components/install-app-button";
 
@@ -6,6 +7,13 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-2xl text-center space-y-8">
         <div className="space-y-4">
+          <Image
+            src="/logo.png"
+            alt="CustomCalcs"
+            width={64}
+            height={64}
+            className="mx-auto rounded-xl"
+          />
           <h1 className="text-4xl font-bold tracking-tight">CustomCalcs</h1>
           <p className="text-lg text-neutral-400">
             Crea tus propias calculadoras de precios, gestiona productos con

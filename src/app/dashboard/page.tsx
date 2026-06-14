@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { verifySession, getCurrentUser, isAdminEmail } from "@/lib/dal";
 import { prisma } from "@/lib/db";
@@ -24,9 +25,18 @@ export default async function DashboardPage() {
     <div className="min-h-screen px-4 py-12">
       <div className="w-full max-w-3xl mx-auto space-y-10">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">CustomCalcs</h1>
-            <p className="text-sm text-neutral-400">Hola, {user?.name}</p>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.png"
+              alt="CustomCalcs"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">CustomCalcs</h1>
+              <p className="text-sm text-neutral-400">Hola, {user?.name}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <InstallAppButton />

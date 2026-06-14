@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useActionState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { login } from "@/app/actions/auth";
@@ -24,6 +25,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-2">
+          <Image
+            src="/logo.png"
+            alt="CustomCalcs"
+            width={56}
+            height={56}
+            className="mx-auto rounded-xl"
+          />
           <h1 className="text-2xl font-bold tracking-tight">CustomCalcs</h1>
           <p className="text-sm text-neutral-400">Inicia sesión en tu cuenta</p>
         </div>
