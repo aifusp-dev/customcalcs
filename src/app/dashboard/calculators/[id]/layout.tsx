@@ -1,6 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
+import {
+  verifySession,
+  getCalculatorRole,
+  canManageCalculator,
+  isAdminAccessOverride,
+} from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { getContrastColor } from "@/lib/colors";
 import { NavMenu } from "./NavMenu";
@@ -19,6 +24,8 @@ export default async function CalculatorLayout({
   if (!role) {
     notFound();
   }
+
+  const adminOverride = await isAdminAccessOverride(id, userId);
 
   const calculator = await prisma.calculator.findUnique({
     where: { id },
@@ -58,7 +65,9 @@ export default async function CalculatorLayout({
           { href: `/dashboard/calculators/${id}/members`, label: "Miembros" },
           { href: `/dashboard/calculators/${id}/discord`, label: "Discord" },
           { href: `/dashboard/calculators/${id}/settings`, label: "Ajustes" },
-          { href: `/dashboard/calculators/${id}/profile`, label: "Mi nombre" },
+          ...(adminOverride
+            ? []
+            : [{ href: `/dashboard/calculators/${id}/profile`, label: "Mi nombre" }]),
         ]
       : [];
 
@@ -79,6 +88,13 @@ export default async function CalculatorLayout({
           </Link>
           <h1 className="text-2xl font-bold tracking-tight">{calculator.name}</h1>
         </div>
+
+        {adminOverride && (
+          <div className="rounded-lg border border-amber-700/50 bg-amber-950/40 px-4 py-2.5 text-sm text-amber-300">
+            Modo administrador: estás gestionando la calculadora de otro
+            usuario.
+          </div>
+        )}
 
         <nav className="flex flex-wrap items-center gap-2 border-b border-neutral-800">
           {tabs.map((tab) => (

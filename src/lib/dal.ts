@@ -58,7 +58,40 @@ export const getCalculatorRole = cache(
 
     if (!calculator) return null;
     if (calculator.ownerId === userId) return "OWNER" as const;
-    return calculator.members[0]?.role ?? null;
+
+    const memberRole = calculator.members[0]?.role ?? null;
+    if (memberRole) return memberRole;
+
+    // Modo admin total: los administradores de la plataforma pueden entrar y
+    // gestionar cualquier calculadora aunque no sean dueños ni miembros.
+    const user = await getCurrentUser();
+    if (user && isAdminEmail(user.email)) return "ADMIN" as const;
+
+    return null;
+  }
+);
+
+/**
+ * True si el acceso del usuario a esta calculadora viene del "modo admin
+ * total" (no es dueño ni miembro real). Se usa para mostrar el aviso de que
+ * está gestionando la calculadora de otra persona.
+ */
+export const isAdminAccessOverride = cache(
+  async (calculatorId: string, userId: string) => {
+    const user = await getCurrentUser();
+    if (!user || !isAdminEmail(user.email)) return false;
+
+    const calculator = await prisma.calculator.findUnique({
+      where: { id: calculatorId },
+      select: {
+        ownerId: true,
+        members: { where: { userId }, select: { id: true } },
+      },
+    });
+
+    if (!calculator) return false;
+    if (calculator.ownerId === userId) return false;
+    return calculator.members.length === 0;
   }
 );
 
