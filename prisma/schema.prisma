@@ -39,6 +39,7 @@ model Calculator {
   ownerId          String
   ownerDisplayName String?
   accentColor      String   @default("#ffffff")
+  categoryOrder    String?
   salesClearedAt   DateTime?
   inviteToken      String?  @unique
   createdAt        DateTime @default(now())

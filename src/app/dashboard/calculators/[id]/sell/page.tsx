@@ -13,20 +13,36 @@ export default async function SellPage({
   const role = await getCalculatorRole(id, userId);
   if (!role) notFound();
 
-  const items = await prisma.item.findMany({
-    where: { calculatorId: id },
-    orderBy: { name: "asc" },
-    include: {
-      ingredients: {
-        select: { quantity: true, ingredient: { select: { stock: true } } },
+  const [items, discounts, calculatorData] = await Promise.all([
+    prisma.item.findMany({
+      where: { calculatorId: id },
+      orderBy: { name: "asc" },
+      include: {
+        ingredients: {
+          select: { quantity: true, ingredient: { select: { stock: true } } },
+        },
       },
-    },
-  });
+    }),
+    prisma.discount.findMany({
+      where: { calculatorId: id },
+      orderBy: { name: "asc" },
+    }),
+    prisma.calculator.findUnique({
+      where: { id },
+      select: { categoryOrder: true },
+    }),
+  ]);
 
-  const discounts = await prisma.discount.findMany({
-    where: { calculatorId: id },
-    orderBy: { name: "asc" },
-  });
+  let categoryOrder: string[] = [];
+  try {
+    const raw = calculatorData?.categoryOrder;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.every((i) => typeof i === "string")) {
+        categoryOrder = parsed;
+      }
+    }
+  } catch {}
 
   return (
     <section className="space-y-4">
@@ -39,6 +55,7 @@ export default async function SellPage({
 
       <SellForm
         calculatorId={id}
+        categoryOrder={categoryOrder}
         items={items.map((item) => {
           const maxCraftable =
             item.ingredients.length > 0

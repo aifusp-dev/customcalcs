@@ -93,6 +93,41 @@ export async function deleteCalculator(calculatorId: string) {
   redirect("/dashboard");
 }
 
+export async function updateCategoryOrder(
+  calculatorId: string,
+  _state: { message?: string } | undefined,
+  formData: FormData
+): Promise<{ message?: string } | undefined> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (!canManageCalculator(role)) {
+    return { message: "No tienes permiso para editar esta calculadora." };
+  }
+
+  const raw = formData.get("categoryOrder");
+  if (typeof raw !== "string") return { message: "Datos inválidos." };
+
+  let order: unknown;
+  try {
+    order = JSON.parse(raw);
+  } catch {
+    return { message: "Datos inválidos." };
+  }
+
+  if (!Array.isArray(order) || !order.every((item) => typeof item === "string")) {
+    return { message: "Datos inválidos." };
+  }
+
+  await prisma.calculator.update({
+    where: { id: calculatorId },
+    data: { categoryOrder: JSON.stringify(order) },
+  });
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}/settings`);
+  revalidatePath(`/dashboard/calculators/${calculatorId}/sell`);
+  return { message: "Orden guardado." };
+}
+
 export async function updateCalculatorTheme(
   calculatorId: string,
   _state: CalculatorThemeFormState,

@@ -20,7 +20,7 @@ type Discount = {
   percentage: string;
 };
 
-function groupByCategory(items: Item[]): [string, Item[]][] {
+function groupByCategory(items: Item[], order: string[]): [string, Item[]][] {
   const groups = new Map<string, Item[]>();
   for (const item of items) {
     const key = item.category?.trim() || "Sin categoría";
@@ -28,17 +28,28 @@ function groupByCategory(items: Item[]): [string, Item[]][] {
     if (list) list.push(item);
     else groups.set(key, [item]);
   }
-  return Array.from(groups.entries());
+  const entries = Array.from(groups.entries());
+  if (order.length === 0) return entries;
+  return entries.sort(([a], [b]) => {
+    const ai = order.indexOf(a);
+    const bi = order.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
 }
 
 export default function SellForm({
   calculatorId,
   items,
   discounts,
+  categoryOrder,
 }: {
   calculatorId: string;
   items: Item[];
   discounts: Discount[];
+  categoryOrder: string[];
 }) {
   const action = createSale.bind(null, calculatorId);
   const [state, formAction, pending] = useActionState(action, undefined);
@@ -81,7 +92,7 @@ export default function SellForm({
     ? subtotal * (1 - Number(selectedDiscount.percentage) / 100)
     : subtotal;
   const totalUnits = Object.values(quantities).reduce((sum, q) => sum + q, 0);
-  const groups = groupByCategory(items);
+  const groups = groupByCategory(items, categoryOrder);
   const showCategoryHeadings =
     groups.length > 1 || groups[0]?.[0] !== "Sin categoría";
 
