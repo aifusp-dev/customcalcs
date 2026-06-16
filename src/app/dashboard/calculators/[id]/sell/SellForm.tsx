@@ -44,6 +44,7 @@ export default function SellForm({
   const [state, formAction, pending] = useActionState(action, undefined);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [discountId, setDiscountId] = useState("");
+  const [note, setNote] = useState("");
   const [handledState, setHandledState] = useState(state);
 
   if (state !== handledState) {
@@ -51,6 +52,7 @@ export default function SellForm({
     if (state?.success) {
       setQuantities({});
       setDiscountId("");
+      setNote("");
     }
   }
 
@@ -214,6 +216,16 @@ export default function SellForm({
               </select>
             </div>
           )}
+
+          <input
+            type="text"
+            name="note"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Nota para esta venta (opcional)"
+            maxLength={280}
+            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-neutral-500 transition-colors placeholder:text-neutral-500"
+          />
 
           <div className="flex items-center justify-between gap-4">
             <div>

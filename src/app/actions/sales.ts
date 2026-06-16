@@ -100,6 +100,9 @@ export async function createSale(
     ? Math.round(subtotal * (1 - Number(discount.percentage) / 100) * 100) / 100
     : subtotal;
 
+  const rawNote = formData.get("note");
+  const note = typeof rawNote === "string" && rawNote.trim() ? rawNote.trim().slice(0, 280) : null;
+
   await prisma.$transaction(async (tx) => {
     const sale = await tx.sale.create({
       data: {
@@ -109,6 +112,7 @@ export async function createSale(
         discountName: discount?.name,
         discountPercentage: discount?.percentage,
         total,
+        note,
       },
     });
 
@@ -155,6 +159,7 @@ export async function createSale(
       total,
       discount,
       lines,
+      note,
     });
   }
 

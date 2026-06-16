@@ -12,8 +12,10 @@ import {
   type ItemFormState,
   AIParsedItemSchema,
   type AIImportFormState,
+  AILinkResultSchema,
+  type AILinkFormState,
 } from "@/lib/definitions";
-import { parseMenuText } from "@/lib/gemini";
+import { parseMenuText, parseLinkingInstruction } from "@/lib/gemini";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
@@ -291,6 +293,140 @@ export async function importItemsBulk(
       category: item.category || null,
       stock: item.stock ?? 0,
     })),
+  });
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}`);
+  redirect(`/dashboard/calculators/${calculatorId}`);
+}
+
+export async function parseLinkWithAI(
+  calculatorId: string,
+  _state: AILinkFormState,
+  formData: FormData
+): Promise<AILinkFormState> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (!canManageCalculator(role)) {
+    return { message: "No tienes permiso para gestionar esta calculadora." };
+  }
+
+  const instruction = formData.get("instruction");
+  if (typeof instruction !== "string" || !instruction.trim()) {
+    return { message: "Escribe una instrucción antes de continuar." };
+  }
+
+  const existingItems = await prisma.item.findMany({
+    where: { calculatorId },
+    select: { name: true, category: true },
+    orderBy: { name: "asc" },
+  });
+
+  try {
+    const raw = await parseLinkingInstruction(instruction, existingItems);
+    const validated = AILinkResultSchema.safeParse(raw);
+    if (!validated.success) {
+      return { message: "La IA devolvió datos con formato inesperado. Inténtalo de nuevo." };
+    }
+    return { result: validated.data };
+  } catch (error) {
+    return { message: error instanceof Error ? error.message : "Error al consultar la IA." };
+  }
+}
+
+const ApplyVinculoSchema = z.object({
+  nombreProducto: z.string().trim().min(1),
+  existente: z.boolean(),
+  precio: z.coerce.number().nonnegative(),
+  categoria: z.string().trim().nullable().optional(),
+  cantidad: z.coerce.number().int().positive(),
+});
+
+export async function applyLinking(
+  calculatorId: string,
+  _state: AILinkFormState,
+  formData: FormData
+): Promise<AILinkFormState> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (!canManageCalculator(role)) {
+    return { message: "No tienes permiso para gestionar esta calculadora." };
+  }
+
+  const mpNombre = formData.get("mp_nombre");
+  const mpCategoria = formData.get("mp_categoria");
+  const mpPrecio = Number(formData.get("mp_precio") ?? 0);
+  const mpStock = Number(formData.get("mp_stock") ?? 0);
+
+  if (typeof mpNombre !== "string" || !mpNombre.trim()) {
+    return { message: "El nombre de la materia prima es obligatorio." };
+  }
+  if (!Number.isFinite(mpPrecio) || mpPrecio < 0) {
+    return { message: "El precio de la materia prima no es válido." };
+  }
+  if (!Number.isInteger(mpStock) || mpStock < 0) {
+    return { message: "El stock inicial de la materia prima no es válido." };
+  }
+
+  const rawVinculos = formData.get("vinculos");
+  if (typeof rawVinculos !== "string") return { message: "No hay vínculos para aplicar." };
+
+  let parsedVinculos: unknown;
+  try {
+    parsedVinculos = JSON.parse(rawVinculos);
+  } catch {
+    return { message: "Datos de vínculos inválidos." };
+  }
+
+  const validatedVinculos = z.array(ApplyVinculoSchema).min(1).safeParse(parsedVinculos);
+  if (!validatedVinculos.success) return { message: "No hay vínculos válidos para aplicar." };
+
+  const existingItems = await prisma.item.findMany({
+    where: { calculatorId },
+    select: { id: true, name: true },
+  });
+
+  const findExisting = (name: string) =>
+    existingItems.find((i) => i.name.toLowerCase() === name.toLowerCase());
+
+  await prisma.$transaction(async (tx) => {
+    const mp = await tx.item.create({
+      data: {
+        calculatorId,
+        name: mpNombre.trim(),
+        category:
+          typeof mpCategoria === "string" && mpCategoria.trim() ? mpCategoria.trim() : null,
+        price: mpPrecio,
+        stock: mpStock,
+      },
+      select: { id: true },
+    });
+
+    for (const vinculo of validatedVinculos.data) {
+      let itemId: string;
+      const existing = findExisting(vinculo.nombreProducto);
+
+      if (existing) {
+        itemId = existing.id;
+      } else {
+        const created = await tx.item.create({
+          data: {
+            calculatorId,
+            name: vinculo.nombreProducto,
+            category: vinculo.categoria ?? null,
+            price: vinculo.precio,
+            stock: 0,
+          },
+          select: { id: true },
+        });
+        itemId = created.id;
+      }
+
+      await tx.itemIngredient.upsert({
+        where: { itemId_ingredientId: { itemId, ingredientId: mp.id } },
+        create: { itemId, ingredientId: mp.id, quantity: vinculo.cantidad },
+        update: { quantity: vinculo.cantidad },
+      });
+    }
   });
 
   revalidatePath(`/dashboard/calculators/${calculatorId}`);

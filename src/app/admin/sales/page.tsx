@@ -23,6 +23,7 @@ export default async function AdminSalesPage() {
               <th className="px-4 py-2.5">Calculadora</th>
               <th className="px-4 py-2.5">Usuario</th>
               <th className="px-4 py-2.5">Productos</th>
+              <th className="px-4 py-2.5">Nota</th>
               <th className="px-4 py-2.5 text-right">Total</th>
             </tr>
           </thead>
@@ -36,6 +37,9 @@ export default async function AdminSalesPage() {
                 <td className="px-4 py-2.5 text-neutral-400">{sale.user.name}</td>
                 <td className="px-4 py-2.5 text-neutral-400 max-w-xs truncate">
                   {sale.items.map((item) => `${item.quantity}× ${item.name}`).join(", ")}
+                </td>
+                <td className="px-4 py-2.5 text-neutral-400 max-w-xs truncate">
+                  {sale.note}
                 </td>
                 <td className="px-4 py-2.5 text-right font-medium">
                   {formatPrice(sale.total)}

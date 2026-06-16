@@ -13,6 +13,7 @@ interface SaleNotificationData {
   total: number;
   discount: { name: string; percentage: string } | null;
   lines: SaleNotificationLine[];
+  note?: string | null;
 }
 
 export async function sendSaleNotification(webhookUrl: string, data: SaleNotificationData) {
@@ -30,6 +31,10 @@ export async function sendSaleNotification(webhookUrl: string, data: SaleNotific
   }
 
   fields.push({ name: "Total", value: formatPrice(data.total), inline: true });
+
+  if (data.note) {
+    fields.push({ name: "Nota", value: data.note, inline: false });
+  }
 
   try {
     await fetch(webhookUrl, {

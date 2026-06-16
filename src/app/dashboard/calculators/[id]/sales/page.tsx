@@ -167,6 +167,11 @@ export default async function SalesPage({
                   </li>
                 ))}
               </ul>
+              {sale.note && (
+                <p className="text-sm text-neutral-400 italic border-t border-neutral-900 pt-2">
+                  {sale.note}
+                </p>
+              )}
             </li>
           ))}
         </ul>

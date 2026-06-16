@@ -209,3 +209,32 @@ export type AIImportFormState =
       message?: string;
     }
   | undefined;
+
+export const AILinkVinculoSchema = z.object({
+  nombreEnInstruccion: z.string().trim(),
+  nombreProducto: z.string().trim().min(1).max(60),
+  existente: z.boolean(),
+  precio: z.coerce.number().nonnegative().default(0),
+  categoria: z.string().trim().max(40).nullable().optional(),
+  cantidad: z.coerce.number().int().positive().default(1),
+});
+
+export const AILinkResultSchema = z.object({
+  materiaPrima: z.object({
+    nombre: z.string().trim().min(1).max(60),
+    categoria: z.string().trim().max(40).nullable().optional(),
+    precio: z.coerce.number().nonnegative(),
+    stockInicial: z.coerce.number().int().nonnegative(),
+  }),
+  vinculos: z.array(AILinkVinculoSchema).min(1),
+});
+
+export type AILinkVinculo = z.infer<typeof AILinkVinculoSchema>;
+export type AILinkResult = z.infer<typeof AILinkResultSchema>;
+
+export type AILinkFormState =
+  | {
+      result?: AILinkResult;
+      message?: string;
+    }
+  | undefined;
