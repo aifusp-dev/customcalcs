@@ -93,6 +93,31 @@ export async function deleteCalculator(calculatorId: string) {
   redirect("/dashboard");
 }
 
+export async function updateHiddenCategories(
+  calculatorId: string,
+  _state: { message?: string } | undefined,
+  formData: FormData
+): Promise<{ message?: string } | undefined> {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (!canManageCalculator(role)) {
+    return { message: "No tienes permiso para editar esta calculadora." };
+  }
+
+  const entries = formData.getAll("hiddenCategory");
+  const hidden = entries.filter((e) => typeof e === "string") as string[];
+
+  await prisma.calculator.update({
+    where: { id: calculatorId },
+    data: { hiddenCategories: JSON.stringify(hidden) },
+  });
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}/settings`);
+  revalidatePath(`/dashboard/calculators/${calculatorId}/sell`);
+  revalidatePath(`/dashboard/calculators/${calculatorId}`);
+  return { message: "Visibilidad guardada." };
+}
+
 export async function updateCategoryOrder(
   calculatorId: string,
   _state: { message?: string } | undefined,

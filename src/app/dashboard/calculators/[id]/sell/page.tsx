@@ -1,7 +1,16 @@
 import { notFound } from "next/navigation";
-import { verifySession, getCalculatorRole } from "@/lib/dal";
+import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import SellForm from "./SellForm";
+
+function parseJsonStringArray(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.every((i) => typeof i === "string")) return parsed;
+  } catch {}
+  return [];
+}
 
 export default async function SellPage({
   params,
@@ -12,6 +21,8 @@ export default async function SellPage({
   const { userId } = await verifySession();
   const role = await getCalculatorRole(id, userId);
   if (!role) notFound();
+
+  const isManager = canManageCalculator(role);
 
   const [items, discounts, calculatorData] = await Promise.all([
     prisma.item.findMany({
@@ -29,20 +40,20 @@ export default async function SellPage({
     }),
     prisma.calculator.findUnique({
       where: { id },
-      select: { categoryOrder: true },
+      select: { categoryOrder: true, hiddenCategories: true },
     }),
   ]);
 
-  let categoryOrder: string[] = [];
-  try {
-    const raw = calculatorData?.categoryOrder;
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.every((i) => typeof i === "string")) {
-        categoryOrder = parsed;
-      }
-    }
-  } catch {}
+  const categoryOrder = parseJsonStringArray(calculatorData?.categoryOrder);
+  const hiddenCategories = parseJsonStringArray(calculatorData?.hiddenCategories);
+
+  const visibleItems = isManager
+    ? items
+    : items.filter(
+        (item) =>
+          !item.hidden &&
+          (item.category === null || !hiddenCategories.includes(item.category))
+      );
 
   return (
     <section className="space-y-4">
@@ -56,7 +67,7 @@ export default async function SellPage({
       <SellForm
         calculatorId={id}
         categoryOrder={categoryOrder}
-        items={items.map((item) => {
+        items={visibleItems.map((item) => {
           const maxCraftable =
             item.ingredients.length > 0
               ? Math.min(

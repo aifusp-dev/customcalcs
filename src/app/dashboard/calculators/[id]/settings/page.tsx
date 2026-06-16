@@ -3,8 +3,9 @@ import { verifySession, getCalculatorRole, canManageCalculator } from "@/lib/dal
 import { prisma } from "@/lib/db";
 import { UpdateCalculatorForm, ThemeForm, DeleteCalculatorForm } from "./SettingsForms";
 import { CategoryOrderForm } from "./CategoryOrderForm";
+import { HiddenCategoriesForm } from "./HiddenCategoriesForm";
 
-function parseCategoryOrder(raw: string | null): string[] {
+function parseJsonStringArray(raw: string | null): string[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -26,7 +27,7 @@ export default async function CalculatorSettingsPage({
   const [calculator, categoryRows] = await Promise.all([
     prisma.calculator.findUnique({
       where: { id },
-      select: { name: true, slug: true, accentColor: true, categoryOrder: true },
+      select: { name: true, slug: true, accentColor: true, categoryOrder: true, hiddenCategories: true },
     }),
     prisma.item.findMany({
       where: { calculatorId: id, category: { not: null } },
@@ -37,7 +38,8 @@ export default async function CalculatorSettingsPage({
   if (!calculator) notFound();
 
   const allCategories = categoryRows.map((r) => r.category!);
-  const storedOrder = parseCategoryOrder(calculator.categoryOrder);
+  const storedOrder = parseJsonStringArray(calculator.categoryOrder);
+  const hiddenCategories = parseJsonStringArray(calculator.hiddenCategories);
   const orderedCategories = [
     ...storedOrder.filter((c) => allCategories.includes(c)),
     ...allCategories.filter((c) => !storedOrder.includes(c)),
@@ -69,6 +71,20 @@ export default async function CalculatorSettingsPage({
             Define el orden en que aparecen las categorías en la pantalla de venta.
           </p>
           <CategoryOrderForm calculatorId={id} categories={orderedCategories} />
+        </div>
+      )}
+
+      {allCategories.length > 0 && (
+        <div className="space-y-4 border-t border-neutral-800 pt-6">
+          <h3 className="text-sm font-semibold">Visibilidad de categorías</h3>
+          <p className="text-sm text-neutral-400">
+            Las categorías marcadas quedan ocultas para los usuarios sin permisos de gestión.
+          </p>
+          <HiddenCategoriesForm
+            calculatorId={id}
+            categories={orderedCategories.length > 0 ? orderedCategories : allCategories}
+            hiddenCategories={hiddenCategories}
+          />
         </div>
       )}
 

@@ -160,6 +160,27 @@ export async function updateItem(
   redirect(`/dashboard/calculators/${calculatorId}`);
 }
 
+export async function toggleItemHidden(calculatorId: string, itemId: string) {
+  const { userId } = await verifySession();
+  const role = await getCalculatorRole(calculatorId, userId);
+  if (!canManageCalculator(role)) {
+    throw new Error("No tienes permiso para gestionar productos de esta calculadora.");
+  }
+
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    select: { hidden: true, calculatorId: true },
+  });
+  if (!item || item.calculatorId !== calculatorId) {
+    throw new Error("Producto no encontrado.");
+  }
+
+  await prisma.item.update({ where: { id: itemId }, data: { hidden: !item.hidden } });
+
+  revalidatePath(`/dashboard/calculators/${calculatorId}`);
+  revalidatePath(`/dashboard/calculators/${calculatorId}/sell`);
+}
+
 export async function deleteItem(calculatorId: string, itemId: string) {
   const { userId } = await verifySession();
   const role = await getCalculatorRole(calculatorId, userId);

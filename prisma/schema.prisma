@@ -38,9 +38,10 @@ model Calculator {
   slug             String   @unique
   ownerId          String
   ownerDisplayName String?
-  accentColor      String   @default("#ffffff")
-  categoryOrder    String?
-  salesClearedAt   DateTime?
+  accentColor        String   @default("#ffffff")
+  categoryOrder      String?
+  hiddenCategories   String?
+  salesClearedAt     DateTime?
   inviteToken      String?  @unique
   createdAt        DateTime @default(now())
 
@@ -103,6 +104,7 @@ model Item {
   imageUrl     String?
   stock        Int      @default(0)
   category     String?
+  hidden       Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   calculator Calculator @relation(fields: [calculatorId], references: [id], onDelete: Cascade)
